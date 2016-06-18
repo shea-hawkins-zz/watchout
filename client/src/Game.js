@@ -2,20 +2,22 @@ class Game {
   constructor(node) {
     this.targetNode = node;
     this.entities = [];
-    this.lives = 5;
     this.highScore = 0;
     this.curScore = 0;
+    this.cooldown = false;
     this.gameState = {
       boardWidth: document.getElementById(this.targetNode).scrollWidth,
-      boardHeight: document.getElementById(this.targetNode).scrollHeight 
+      boardHeight: document.getElementById(this.targetNode).scrollHeight,
+      lives: 5
     };
     //Selects the game board and appends the new game svg to the board
     this.svgSelection = d3.selectAll('#' + this.targetNode)
       .append('svg')
       .attr('width', this.gameState.boardWidth)
       .attr('height', this.gameState.boardHeight);
-    this.addEnemies(10);
+    this.addEnemies(5);
     this.addPlayer();
+    setInterval(this.incrementCounter.bind(this), 100);
     this.render();
   }
   addEnemies(n) {
@@ -23,33 +25,40 @@ class Game {
       this.entities.push(new Enemy(this.gameState));
     }
   }
+  incrementCounter() {
+    if (this.lives > 0) {
+      this.curScore++;
+    }
+    if (this.curScore > this.highScore) {
+      this.highScore = this.curScore;
+    }
+    //console.log(this.curScore);
+  }
+  decrementLives() {
+    if (!this.cooldown) {
+      this.gameState.lives--; 
+      this.cooldown = true;
+      setTimeout(() => this.cooldown = false, 750);
+    }
+    console.log(this.gameState.lives);
+  }
   addPlayer() {
     this.player = new Player(this.gameState);
-    var that = this;
+    var thisGame = this;
     var move = d3.behavior.drag().on('drag', function(d, i) {
       let dx = d3.event.dx;
       let dy = d3.event.dy;
       d.x += d3.event.dx;
       d.y += d3.event.dy;
-      var absoluteX = d.x + that.gameState.boardWidth / 2;
-      var absoluteY = d.y + that.gameState.boardHeight / 2;
-
-      // Detects if this movement causes the player to collide with an enemy.
-      // D3 selection of the enemies, check collision each.
-      let enemies = d3.selectAll('.enemies')[0];
-      for (var i = 0; i < enemies.length; i++) {
-        var cx = enemies[i].getAttribute('cx');
-        var cy = enemies[i].getAttribute('cy');
-        var r = Number(enemies[i].getAttribute('r'));
-        var distance = Math.sqrt(Math.pow(Number(cx) - Number(absoluteX), 2) + Math.pow(Number(cy) - Number(absoluteY), 2));
-        if (distance < r + d.r) {
-          that.lives = that.lives - 1;        
-        }
-      }
       d3.select(this).attr('transform', function(d, i) {
-        var stringTest = 'translate(' + dx + ',' + dy + ')';
         return 'translate(' + d.x + ',' + d.y + ')';
       });
+      d.currentX = Number(this.getAttribute('cx')) + Number(d.x);
+      d.currentY = Number(this.getAttribute('cy')) + Number(d.y);
+      d.detectCollisionWith('enemies', thisGame.decrementLives.bind(thisGame));
+      // Detects if this movement causes the player to collide with an enemy.
+      // D3 selection of the enemies, check collision each.
+      
     });
     // the player on move must check all of the enemy objects
     // and determine if its absolute coordinate + width and + height collides with any 
@@ -61,6 +70,7 @@ class Game {
       })
       .enter()
       .append('circle')
+      .attr('class', 'player')
       .attr('cx', (data) => {
         return this.gameState.boardWidth / 2;
       })
@@ -82,6 +92,7 @@ class Game {
       .data(this.entities, function(entity) {
         return entity.id;
       });
+    var thisGame = this;
     entitySelection  
       .enter()
       .append('circle')
@@ -112,6 +123,14 @@ class Game {
       })
       .style('fill', function(data) {
         return data.color;
+      })
+      .tween('collisionDetection', function(d) {
+        return function() {
+          d.currentX = this.getAttribute('cx');
+          d.currentY = this.getAttribute('cy');
+          d.currentR = this.getAttribute('r');
+          d.detectCollisionWith.call(d, 'player', thisGame.decrementLives.bind(thisGame));
+        };
       });
 
     setTimeout(this.render.bind(this), 2000);
@@ -130,8 +149,25 @@ class Entity {
     this.r = this.getRandomRadius();
     this.color = this.getRandomColor();
     let pos = this.getRandomPosition();
-    this.x = pos[0];
+    this.x = pos[0]; // Identifies the entity's target position
     this.y = pos[1];
+    this.currentX = pos[0]; // Identifies the entity's current in the moment position
+    this.currentY = pos[0];
+    this.currentR = this.r;
+  }
+  detectCollisionWith(className, callback) {
+    let entities = d3.selectAll('.' + className)[0];
+    for (var i = 0; i < entities.length; i++) {
+      var cx = Number(entities[i].__data__.currentX);
+      var cy = Number(entities[i].__data__.currentY);
+      var r = Number(entities[i].__data__.currentR);
+      var absoluteX = this.currentX;
+      var absoluteY = this.currentY;
+      var distance = Math.sqrt(Math.pow(cx - absoluteX, 2) + Math.pow(cy - absoluteY, 2));
+      if (distance < r + this.r) {
+        callback();       
+      }
+    }
   }
   getRandomRadius() {
     return Math.random() * 20 + 10;
