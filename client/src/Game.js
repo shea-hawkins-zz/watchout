@@ -15,7 +15,7 @@ class Game {
       .append('svg')
       .attr('width', this.gameState.boardWidth)
       .attr('height', this.gameState.boardHeight);
-    this.addEnemies(5);
+    this.addEnemies(11);
     this.addPlayer();
     setInterval(this.incrementCounter.bind(this), 100);
     this.render();
@@ -26,21 +26,26 @@ class Game {
     }
   }
   incrementCounter() {
-    if (this.lives > 0) {
+    if (this.gameState.lives > 0) {
       this.curScore++;
     }
     if (this.curScore > this.highScore) {
       this.highScore = this.curScore;
     }
-    //console.log(this.curScore);
+    $('.current').text('Current Score: ' + this.curScore);
+    $('.highscore').text('High Score: ' + this.highScore);
   }
   decrementLives() {
     if (!this.cooldown) {
       this.gameState.lives--; 
       this.cooldown = true;
+      if (this.gameState.lives === 0) {
+        this.gameState.lives = 5;
+        this.curScore = 0;
+      }
       setTimeout(() => this.cooldown = false, 750);
     }
-    console.log(this.gameState.lives);
+    $('.collisions').text('Lives Left: ' + this.gameState.lives);
   }
   addPlayer() {
     this.player = new Player(this.gameState);
