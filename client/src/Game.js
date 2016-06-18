@@ -25,17 +25,35 @@ class Game {
   }
   addPlayer() {
     this.player = new Player(this.gameState);
+    var that = this;
     var move = d3.behavior.drag().on('drag', function(d, i) {
       let dx = d3.event.dx;
       let dy = d3.event.dy;
       d.x += d3.event.dx;
-      d.y += d3.event.dy; 
+      d.y += d3.event.dy;
+      var absoluteX = d.x + that.gameState.boardWidth / 2;
+      var absoluteY = d.y + that.gameState.boardHeight / 2;
+
+      // Detects if this movement causes the player to collide with an enemy.
+      // D3 selection of the enemies, check collision each.
+      let enemies = d3.selectAll('.enemies')[0];
+      for (var i = 0; i < enemies.length; i++) {
+        var cx = enemies[i].getAttribute('cx');
+        var cy = enemies[i].getAttribute('cy');
+        var r = Number(enemies[i].getAttribute('r'));
+        var distance = Math.sqrt(Math.pow(Number(cx) - Number(absoluteX), 2) + Math.pow(Number(cy) - Number(absoluteY), 2));
+        if (distance < r + d.r) {
+          that.lives = that.lives - 1;        
+        }
+      }
       d3.select(this).attr('transform', function(d, i) {
-        console.log(d.x, d.y);
         var stringTest = 'translate(' + dx + ',' + dy + ')';
         return 'translate(' + d.x + ',' + d.y + ')';
       });
     });
+    // the player on move must check all of the enemy objects
+    // and determine if its absolute coordinate + width and + height collides with any 
+    // enemy objects. 
     this.svgSelection
       .selectAll('circle')
       .data([this.player], function(entity) {
@@ -76,6 +94,7 @@ class Game {
       .attr('r', function(data) {
         return data.r;
       })
+      .attr('class', 'enemies')
       .style('fill', function(data) {
         return data.color;
       });
@@ -151,6 +170,11 @@ class Player extends Entity {
     super(gameState);
     this.x = 0;
     this.y = 0;
+  }
+  update(entities) {
+    // go through each entity
+    // check if this' bounding box collides with other's
+    // if it collides, 
   }
 }
 
