@@ -1,14 +1,20 @@
 <!DOCTYPE html>
 <html>
   <head>
-      <link rel="stylesheet" href="styles.css">
+      <link rel="stylesheet" href="overrideStyles.css">
+      <link rel="stylesheet" href="css/foundation.css">
+      <link rel="stylesheet" href="css/app.css">
   </head>
   <body>
     <div class="header">Placeholder for header</div>
       <!-- Modify the scoreboard when important events occur in your game! -->
-
+      <div class="range-slider" data-slider>
+        <span class="range-slider-handle" role="slider" tabindex="0"></span>
+        <span class="range-slider-active-segment"></span>
+        <input type="hidden">
+      </div>
     <div class="gameBackground">
-          <div class="gameBoard"></div>
+          <div id="gameBoard"></div>
     </div>
     <div class="footer">
       <div class="highscore">High score: <span>0</span></div>
@@ -17,5 +23,6 @@
     </div>
     <script src="lib/d3.js" charset="utf-8"></script>
     <script src='watchout.js'></script>
+    <script src='src/Game.js'></script>
   </body>
 </html>
