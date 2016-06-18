@@ -24,8 +24,35 @@ class Game {
     }
   }
   addPlayer() {
-    var player = new Player(this.gameState);
-    this.entities.push(player);
+    this.player = new Player(this.gameState);
+    var move = d3.behavior.drag().on('drag', function(d, i) {
+      let dx = d3.event.dx;
+      let dy = d3.event.dy;
+      d.x += d3.event.dx;
+      d.y += d3.event.dy; 
+      d3.select(this).attr('transform', function(d, i) {
+        console.log(d.x, d.y);
+        var stringTest = 'translate(' + dx + ',' + dy + ')';
+        return 'translate(' + d.x + ',' + d.y + ')';
+      });
+    });
+    this.svgSelection
+      .selectAll('circle')
+      .data([this.player], function(entity) {
+        return entity.id;
+      })
+      .enter()
+      .append('circle')
+      .attr('cx', (data) => {
+        return this.gameState.boardWidth / 2;
+      })
+      .attr('cy', (data) => {
+        return this.gameState.boardHeight / 2;
+      })
+      .attr('r', 25)
+      .style('fill', (data) => {
+        return data.color;
+      }).call(move);
   }
   render() {
     this.entities.forEach(entity => entity.update());
@@ -54,7 +81,7 @@ class Game {
       });
     entitySelection
       .transition()
-      .duration(1000)
+      .duration(1750)
       .attr('cx', function(data) {
         return data.x;
       })
@@ -68,7 +95,7 @@ class Game {
         return data.color;
       });
 
-    setTimeout(this.render.bind(this), 1000);
+    setTimeout(this.render.bind(this), 2000);
       /// SetInterval
         ///  Call render after n secs
 
@@ -122,6 +149,8 @@ class Entity {
 class Player extends Entity {
   constructor(gameState) {
     super(gameState);
+    this.x = 0;
+    this.y = 0;
   }
 }
 
@@ -130,8 +159,8 @@ class Enemy extends Entity {
     super(gameState);
   }
   update() {
-    [this.x, this.y] = this.getRandomPosition();
     this.r = this.getRandomRadius();
+    [this.x, this.y] = this.getRandomPosition();
     this.color = this.getRandomColor();
   }
 }
@@ -151,15 +180,6 @@ class Enemy extends Entity {
 var game = new Game('gameBoard');
 
 
-// var drag = d3.behavior.drag()
-//   .on("drag", dragmove);
-
-// function dragmove(d) {
-//   var x = d3.event.x;
-//   var y = d3.event.y;
-//   d3.select(this).attr("transform", "translate(" + x + , + y + ")");
-// }
-// }
 
 
 
