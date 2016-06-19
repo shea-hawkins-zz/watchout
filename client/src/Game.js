@@ -17,7 +17,7 @@ class Game {
       .attr('height', this.gameState.boardHeight);
     this.addEnemies(11);
     this.addPlayer();
-    setInterval(this.incrementCounter.bind(this), 100);
+    setInterval(this.incrementCounter.bind(this), 250);
     this.render();
   }
   addEnemies(n) {
@@ -68,6 +68,7 @@ class Game {
     // the player on move must check all of the enemy objects
     // and determine if its absolute coordinate + width and + height collides with any 
     // enemy objects. 
+
     this.svgSelection
       .selectAll('circle')
       .data([this.player], function(entity) {
@@ -85,7 +86,9 @@ class Game {
       .attr('r', 25)
       .style('fill', (data) => {
         return data.color;
-      }).call(move);
+      })
+      .attr('stdDeviation', 5)
+      .call(move);
   }
   render() {
     this.entities.forEach(entity => entity.update());
@@ -98,6 +101,7 @@ class Game {
         return entity.id;
       });
     var thisGame = this;
+
     entitySelection  
       .enter()
       .append('circle')
@@ -111,12 +115,13 @@ class Game {
         return data.r;
       })
       .attr('class', 'enemies')
+      .attr("stdDeviation", 15)
       .style('fill', function(data) {
         return data.color;
       });
     entitySelection
       .transition()
-      .duration(1750)
+      .duration(1500)
       .attr('cx', function(data) {
         return data.x;
       })
@@ -156,6 +161,7 @@ class Entity {
     let pos = this.getRandomPosition();
     this.x = pos[0]; // Identifies the entity's target position
     this.y = pos[1];
+    this.speed = this.getRandomSpeed();
     this.currentX = pos[0]; // Identifies the entity's current in the moment position
     this.currentY = pos[0];
     this.currentR = this.r;
@@ -199,6 +205,10 @@ class Entity {
       y = 0 + this.r;
     }
     return [x, y];
+  }
+
+  getRandomSpeed() {
+    return Math.random() * 1200 + 1000;
   }
 
   update() {
